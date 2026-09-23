@@ -1,1 +1,8 @@
-EEMTJEpRfx0cXhQ3Vhk0HBtYCntYGzkdD1IFPFYEO0FXBlJhC1hnC0kCX2UPXGAATwBWZhYmGmUsW14uAC1jdkB8AThzLhxCJ1JQM2hdOGEMbTJiXgwWQyhuKBcKPyRnMmZVHwEzaVpVcxM5QwxpYQJgUhNaLioCPQ==
+function encrypt(url, key = 'x7gT9kP2') {
+    let encrypted = '';
+    for (let i = 0; i < url.length; i++) {
+        encrypted += String.fromCharCode(url.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return btoa(encrypted); // Base64'e çevir
+}
+console.log(encrypt("https://discord.com/api/webhooks/..."));

